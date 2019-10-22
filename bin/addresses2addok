@@ -1,0 +1,46 @@
+#!/usr/bin/env node
+
+const rp = require('request-promise');
+
+const url = process.argv[2];
+if (!url) return console.error('Please provide an url');
+
+function regroupByStreets(geojson) {
+  return geojson.features.reduce((memo, feature) => {
+    if (!memo[feature.properties.street]) {
+      memo[feature.properties.street] = [];
+    }
+    memo[feature.properties.street].push(feature)
+    return memo;
+  }, {});
+}
+
+function createJsonEntries(data) {
+  return Object.keys(data).map((street) => {
+    const housenumbers = data[street].reduce((memo, feature) => {
+      const [ lon, lat ] = feature.geometry.coordinates;
+      memo[feature.properties.housenumber] = { lat, lon };
+      return memo;
+    }, {});
+    return {
+      type: 'street',
+      name: [street],
+      postcode: '92120',
+      city: 'Montrouge',
+      citycode: ['92049'],
+      importance: 1,
+      lat: housenumbers[Object.keys(housenumbers)[0]].lat,
+      lon: housenumbers[Object.keys(housenumbers)[0]].lon,
+      housenumbers
+    };
+  });
+}
+
+function printEntries(entries) {
+  entries.forEach(street => console.log(JSON.stringify(street)));
+}
+
+rp(url, { json: true })
+  .then(regroupByStreets)
+  .then(createJsonEntries)
+  .then(printEntries);
