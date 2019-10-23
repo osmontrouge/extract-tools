@@ -27,7 +27,6 @@ function createJsonEntries(data) {
       name: [street],
       postcode: '92120',
       city: 'Montrouge',
-      citycode: ['92049'],
       importance: 1,
       lat: housenumbers[Object.keys(housenumbers)[0]].lat,
       lon: housenumbers[Object.keys(housenumbers)[0]].lon,
