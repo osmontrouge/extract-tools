@@ -1,0 +1,56 @@
+#!/usr/bin/env node
+
+const rp = require('request-promise');
+const osmtogeojson = require('osmtogeojson');
+
+const url = process.argv[2];
+if (!url) return console.error('Please provide an overpass url');
+
+const toExtracts = ['amenity', 'shop', 'craft', 'tourism', 'office', 'sport', 'leisure', 'landuse'];
+
+function getPoi(feature) {
+  return toExtracts.find(tag => feature.properties[tag]);
+}
+
+function createJsonEntries(geojson) {
+  return geojson.features.map((feature) => {
+    const [ lon, lat ] = feature.geometry.coordinates;
+    return {
+      id: `osm:${feature.properties.id.replace(/\//, ':')}`,
+      type: 'poi',
+      poi: getPoi(feature),
+      name: [feature.properties.name || ''],
+      city: 'Montrouge',
+      importance: 1,
+      lat,
+      lon,
+      tags: feature.properties
+    };
+  });
+}
+
+function printEntries(entries) {
+  entries.forEach(poi => console.log(JSON.stringify(poi)));
+}
+
+const features = toExtracts.map(tag => `nwr[${tag}](area.searchArea);`).join('');
+const query = `
+[out:json][timeout:60];
+area(3600037026)->.searchArea;
+(
+  ${features}
+);
+out center;
+`;
+
+
+const options = {
+  method: 'POST',
+  form: { data: query },
+  json: true,
+};
+
+rp(url, options)
+    .then(data => osmtogeojson(data))
+    .then(createJsonEntries)
+    .then(printEntries);
