@@ -16,7 +16,7 @@ function createJsonEntries(geojson) {
   return geojson.features.map((feature) => {
     const [ lon, lat ] = feature.geometry.coordinates;
     return {
-      id: `osm:${feature.properties.id.replace(/\//, ':')}`,
+      _id: `osm:${feature.properties.id.replace(/\//, ':')}`,
       type: 'poi',
       poi: getPoi(feature),
       name: [feature.properties.name || ''],
